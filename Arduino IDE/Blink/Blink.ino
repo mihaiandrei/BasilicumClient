@@ -15,10 +15,8 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-  digitalWrite(D7, LOW);   // Turn the LED on (Note that LOW is the voltage level
-  // but actually the LED is on; this is because
-  // it is active low on the ESP-01)
-  delay(2000);                      // Wait for a second
-  digitalWrite(D7, HIGH);  // Turn the LED off by making the voltage HIGH
-  delay(4000);                      // Wait for two seconds (to demonstrate the active low LED)
+  digitalWrite(D7, LOW);
+  delay(2000);
+  digitalWrite(D7, HIGH);
+  delay(10000);
 }
