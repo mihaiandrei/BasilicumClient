@@ -5,11 +5,12 @@
 #include <WiFiClient.h>
 
 ESP8266WiFiMulti WiFiMulti;
+int retryAttempt;
 
 void setup() {
   pinMode(D5, OUTPUT);     // Initialize the pin as an output
-  digitalWrite(D5, LOW);
-
+  digitalWrite(D5, HIGH);
+  retryAttempt = 10;
   WiFi.mode(WIFI_STA);
   WiFiMulti.addAP("DIGI_71f618", "3ff08e09");
   Serial.begin(115200);
@@ -17,18 +18,14 @@ void setup() {
 
 void loop() {
   // wait for WiFi connection
-  if ((WiFiMulti.run() == WL_CONNECTED)) {
+  if (WiFiMulti.run() == WL_CONNECTED) {
     WiFiClient client;
 
-    Serial.println();
-    Serial.print("Starting ...");
-    Serial.flush();
+    writeToSerial("Connected to wifi");
 
     HTTPClient http;
-    //  int sensorValue = analogRead(A0);
-    // Serial.println();
-    // Serial.print(String(sensorValue));
-    // Serial.flush();
+    int sensorValue = analogRead(A0);
+    writeToSerial(("Value read: " + String(sensorValue)).c_str());
     if (http.begin(client, "http://basilicum-api.azurewebsites.net/api/mesurement/create/1/1")) {
       int httpCode = http.POST("Content-Length: 0");
 
@@ -36,39 +33,39 @@ void loop() {
       if (httpCode > 0) {
         // file found at server
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-          Serial.println();
-          Serial.print("Http call success " + String(httpCode));
-          Serial.flush();
-          delay(1000);
-
-          Serial.println();
-          Serial.print("Going to sleep");
-          Serial.flush();
-          ESP.deepSleep(60e6);
+          writeToSerial(("Http call success " + String(httpCode)).c_str());
+          shutDown();
         }
         else {
-          Serial.println();
-          Serial.print(" http failed " + String(httpCode));
-          Serial.flush();
-          delay(1000);
+          writeToSerial(("http failed " + String(httpCode)).c_str());
         }
         http.end();
-        Serial.println();
-        Serial.print("Http end");
-        Serial.flush();
-        delay(1000);
       }
       else {
-        Serial.println();
-        Serial.print("Http code  < 0");
-        Serial.flush();
+        writeToSerial(("http failed " + String(httpCode)).c_str());
       }
     }
   }
   else {
-    Serial.println();
-    Serial.print("Not connected to wifi");
-    Serial.flush();
+    writeToSerial("Connection to wifi failed");
+    delay(1000);
   }
-  
+  if (retryAttempt <= 0) {
+    writeToSerial("Finish retring");
+    shutDown();
+  }
+  retryAttempt-- ;
+}
+
+void writeToSerial(const char* input) {
+  Serial.println();
+  Serial.print(input);
+  Serial.flush();
+  return;
+}
+
+void shutDown() {
+  digitalWrite(D5, LOW);
+  writeToSerial("Going to sleep");
+  ESP.deepSleep(60e6);
 }
