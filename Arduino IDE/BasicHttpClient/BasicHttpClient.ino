@@ -23,27 +23,13 @@ void loop() {
 
     writeToSerial("Connected to wifi");
 
-    HTTPClient http;
     int sensorValue = analogRead(A0);
     writeToSerial(("Value read: " + String(sensorValue)).c_str());
-    if (http.begin(client, "http://basilicum-api.azurewebsites.net/api/mesurement/create/1/1")) {
-      int httpCode = http.POST("Content-Length: 0");
-
-      // httpCode will be negative on error
-      if (httpCode > 0) {
-        // file found at server
-        if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-          writeToSerial(("Http call success " + String(httpCode)).c_str());
-          shutDown();
-        }
-        else {
-          writeToSerial(("http failed " + String(httpCode)).c_str());
-        }
-        http.end();
-      }
-      else {
-        writeToSerial(("http failed " + String(httpCode)).c_str());
-      }
+    double celsius = milivoltsToCelsius(sensorValue);
+    writeToSerial(("Value read Celsius: " + String(celsius)).c_str());
+    
+    if (sendMeasurement(client, 2, sensorValue) && sendMeasurement(client, 3, celsius)) {
+      shutDown();
     }
   }
   else {
@@ -51,10 +37,39 @@ void loop() {
     delay(1000);
   }
   if (retryAttempt <= 0) {
-    writeToSerial("Finish retring");
+    writeToSerial("Finish retrying");
     shutDown();
   }
   retryAttempt-- ;
+}
+
+bool sendMeasurement(WiFiClient client, int parameterId, double parameterValue) {
+  HTTPClient http;
+  if (http.begin(client, "http://basilicum-api.azurewebsites.net/api/mesurement/create/" + String(parameterId) + "/" + String(parameterValue))) {
+    int httpCode = http.POST("Content-Length: 0");
+
+    // httpCode will be negative on error
+    if (httpCode > 0) {
+      // file found at server
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+        writeToSerial(("Http call success " + String(httpCode)).c_str());
+        return true;
+      }
+      else {
+        writeToSerial(("http failed " + String(httpCode)).c_str());
+        return false;
+      }
+      http.end();
+    }
+    else {
+      writeToSerial(("http failed " + String(httpCode)).c_str());
+      return false;
+    }
+  }
+}
+
+double milivoltsToCelsius(int milivolts) {
+  return (milivolts - 159) / 5.12077;
 }
 
 void writeToSerial(const char* input) {
