@@ -45,13 +45,21 @@ void loop() {
 
 bool sendMeasurement(WiFiClient client, int parameterId, double parameterValue) {
   HTTPClient http;
+<<<<<<< HEAD
   if (http.begin(client, "http://basilicum-api.azurewebsites.net/api/mesurement/create/" + String(parameterId) + "/" + String(parameterValue))) {
+=======
+  if (http.begin(client, "http://basilicum-api.azurewebsites.net/api/measurement/create/" + String(parameterId) + "/" + String(parameterValue))) {
+>>>>>>> Include created http code in succcess case
     int httpCode = http.POST("Content-Length: 0");
 
     // httpCode will be negative on error
     if (httpCode > 0) {
       // file found at server
+<<<<<<< HEAD
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+=======
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY || httpCode == HTTP_CODE_CREATED) {
+>>>>>>> Include created http code in succcess case
         writeToSerial(("Http call success " + String(httpCode)).c_str());
         return true;
       }
@@ -66,6 +74,26 @@ bool sendMeasurement(WiFiClient client, int parameterId, double parameterValue) 
       return false;
     }
   }
+<<<<<<< HEAD
+=======
+}
+
+double milivoltsToCelsius(int milivolts) {
+  return (milivolts - 159) / 5.12077;
+}
+
+void writeToSerial(const char* input) {
+  Serial.println();
+  Serial.print(input);
+  Serial.flush();
+  return;
+}
+
+void shutDown() {
+  digitalWrite(D5, LOW);
+  writeToSerial("Going to sleep");
+  ESP.deepSleep(600e6);
+>>>>>>> Include created http code in succcess case
 }
 
 double milivoltsToCelsius(int milivolts) {
